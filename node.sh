@@ -5,7 +5,7 @@ echo "Running node.sh"
 adminUsername=$1
 adminPassword=$2
 uniqueString=$3
-location='australiaeast,'
+location='australiaeast'
 graphDatabaseVersion=$4
 installGraphDataScience=$5
 graphDataScienceLicenseKey=$6
