@@ -63,9 +63,9 @@ sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_addr
 echo "Adding entries to /etc/hosts to route cluster traffic internally..."
 echo "
 # Route cluster traffic internally
-10.176.32.68 vm0.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.32.69 vm1.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.32.70 vm2.node-${uniqueString}.${location}.cloudapp.azure.com
+10.176.24.68 vm0.node-${uniqueString}.${location}.cloudapp.azure.com
+10.176.24.69 vm1.node-${uniqueString}.${location}.cloudapp.azure.com
+10.176.24.70 vm2.node-${uniqueString}.${location}.cloudapp.azure.com
 " >> /etc/hosts
 
 if [[ $nodeCount == 1 ]]; then
