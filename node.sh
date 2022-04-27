@@ -76,7 +76,7 @@ else
   echo Running on multiple nodes.  Configuring membership in neo4j.conf...
   coreMembers='vm0X,vm1X,vm2X'
   coreMembers=$(echo $coreMembers | sed 's/X/.node-'$uniqueString'.'$location'.cloudapp.azure.com:5000/g')
-  sed -i s/#causal_clustering.initial_discovery_members=localhost:5000,localhost:5001,localhost:5002/causal_clustering.initial_discovery_members=${coreMembers}/g /etc/neo4j/neo4j.conf
+  sed -i s/#causal_clustering.initial_discovery_members=localhost:5000,localhost:5001,localhost:5002/causal_clustering.initial_discovery_members=10.176.24.68:5000,10.176.24.69:5000,10.176.24.70:5000/g /etc/neo4j/neo4j.conf
   sed -i s/#dbms.mode=CORE/dbms.mode=CORE/g /etc/neo4j/neo4j.conf
 fi
 
