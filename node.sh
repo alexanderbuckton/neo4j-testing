@@ -53,30 +53,15 @@ sed -i '$a dbms.security.procedures.allowlist=apoc.*,gds.*,bloom.*' /etc/neo4j/n
 
 echo Configuring network in neo4j.conf...
 sed -i 's/#dbms.default_listen_address=0.0.0.0/dbms.default_listen_address=0.0.0.0/g' /etc/neo4j/neo4j.conf
-nodeIndex=`curl -H Metadata:true "http://169.254.169.254/metadata/instance/compute?api-version=2017-03-01" \
-  | jq ".name" \
-  | sed 's/.*_//' \
-  | sed 's/"//'`
-publicHostname='vm'$nodeIndex'.node-'$uniqueString'.'$location'.cloudapp.azure.com'
 ipString=$(hostname -I)
 echo "Ip Address ${ipString}"
 sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_address="${ipString}"/g /etc/neo4j/neo4j.conf
 
-echo "Adding entries to /etc/hosts to route cluster traffic internally..."
-echo "
-# Route cluster traffic internally
-10.176.24.68 vm0.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.24.69 vm1.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.24.70 vm2.node-${uniqueString}.${location}.cloudapp.azure.com
-" >> /etc/hosts
 
 if [[ $nodeCount == 1 ]]; then
   echo Running on a single node.
 else
-  echo Running on multiple nodes.  Configuring membership in neo4j.conf...
-  coreMembers='vm0X,vm1X,vm2X'
-  coreMembers=$(echo $coreMembers | sed 's/X/.node-'$uniqueString'.'$location'.cloudapp.azure.com:5000/g')
-  sed -i s/#causal_clustering.initial_discovery_members=localhost:5000,localhost:5001,localhost:5002/causal_clustering.initial_discovery_members=10.176.24.68:5000,10.176.24.69:5000,10.176.24.70:5000/g /etc/neo4j/neo4j.conf
+  sed -i s/#causal_clustering.initial_discovery_members=localhost:5000,localhost:5001,localhost:5002/causal_clustering.initial_discovery_members=10.176.32.68:5000,10.176.32.69:5000,10.176.32.70:5000/g /etc/neo4j/neo4j.conf
   sed -i s/#dbms.mode=CORE/dbms.mode=CORE/g /etc/neo4j/neo4j.conf
 fi
 
