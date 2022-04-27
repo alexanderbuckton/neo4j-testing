@@ -58,7 +58,8 @@ nodeIndex=`curl -H Metadata:true "http://169.254.169.254/metadata/instance/compu
   | sed 's/.*_//' \
   | sed 's/"//'`
 publicHostname='vm'$nodeIndex'.node-'$uniqueString'.'$location'.cloudapp.azure.com'
-sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_address=${publicHostname}/g /etc/neo4j/neo4j.conf
+ip=/sbin/ifconfig eth0 | grep 'inet' | cut -d: -f2 | awk  '{ print $2}'
+sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_address=${ip}/g /etc/neo4j/neo4j.conf
 
 echo "Adding entries to /etc/hosts to route cluster traffic internally..."
 echo "
