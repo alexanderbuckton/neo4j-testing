@@ -60,16 +60,16 @@ sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_addr
 echo "Adding entries to /etc/hosts to route cluster traffic internally..."
 echo "
 # Route cluster traffic internally
-10.176.24.68 vm0.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.24.69 vm1.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.24.70 vm2.node-${uniqueString}.${location}.cloudapp.azure.com
+10.176.32.68 vm0.node-${uniqueString}.${location}.cloudapp.azure.com
+10.176.32.69 vm1.node-${uniqueString}.${location}.cloudapp.azure.com
+10.176.32.70 vm2.node-${uniqueString}.${location}.cloudapp.azure.com
 " >> /etc/hosts
 
 if [[ $nodeCount == 1 ]]; then
   echo Running on a single node.
 else
   echo Running on multiple nodes.  Configuring membership in neo4j.conf...
-  sed -i s/#causal_clustering.initial_discovery_members=localhost:5000,localhost:5001,localhost:5002/causal_clustering.initial_discovery_members=10.176.24.68:5000,10.176.24.69:5000,10.176.24.70:5000/g /etc/neo4j/neo4j.conf
+  sed -i s/#causal_clustering.initial_discovery_members=localhost:5000,localhost:5001,localhost:5002/causal_clustering.initial_discovery_members=10.176.32.68:5000,10.176.32.69:5000,10.176.32.70:5000/g /etc/neo4j/neo4j.conf
   sed -i s/#dbms.mode=CORE/dbms.mode=CORE/g /etc/neo4j/neo4j.conf
 fi
 
