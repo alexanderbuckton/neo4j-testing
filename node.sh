@@ -29,20 +29,6 @@ echo "Turning off firewalld"
 systemctl stop firewalld
 systemctl disable firewalld
 
-#Format and mount the data disk to /var/lib/neo4j
-MOUNT_POINT="/var/lib/neo4j"
-
-sudo parted /dev/sdc --script mklabel gpt mkpart xfspart xfs 0% 100%
-sudo mkfs.xfs /dev/sdc1
-sudo partprobe /dev/sdc1
-mkdir $MOUNT_POINT
-
-DATA_DISK_UUID=$(blkid | grep sdc | awk {'print $2'} | sed s/\"//g)
-echo "$DATA_DISK_UUID $MOUNT_POINT xfs defaults 0 0" >> /etc/fstab
-
-systemctl daemon-reload
-mount -a
-
 echo Adding neo4j yum repo...
 rpm --import https://debian.neo4j.com/neotechnology.gpg.key
 echo "
@@ -88,6 +74,10 @@ sed -i 's/dbms.connector.https.enabled=false/dbms.connector.https.enabled=true/g
 echo Turn extra setting on
 sed -i 's/#dbms.allow_upgrade=true/dbms.allow_upgrade=true/g' /etc/neo4j/neo4j.conf
 sed -i 's/#dbms.routing.enabled=false/dbms.routing.enabled=true/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.memory.heap.initial_size=512m/dbms.memory.heap.initial_size=24100m/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.memory.heap.max_size=512m/dbms.memory.heap.max_size=24100m/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.memory.pagecache.size=10g/dbms.memory.pagecache.size=28000m/g' /etc/neo4j/neo4j.conf
+
 
 answers() {
 echo --
@@ -101,8 +91,8 @@ echo root@localhost.localdomain
 answers | /usr/bin/openssl req -newkey rsa:2048 -keyout private.key -nodes -x509 -days 365 -out public.crt
 
 ### Todo - turn on cluster and backup
-for service in bolt https cluster backup; do
-#for service in https; do
+#for service in bolt https cluster backup; do
+for service in https; do
   sed -i s/#dbms.ssl.policy.${service}/dbms.ssl.policy.${service}/g /etc/neo4j/neo4j.conf
   mkdir -p /var/lib/neo4j/certificates/${service}/trusted
   mkdir -p /var/lib/neo4j/certificates/${service}/revoked
