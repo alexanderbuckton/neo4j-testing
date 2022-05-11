@@ -29,6 +29,20 @@ echo "Turning off firewalld"
 systemctl stop firewalld
 systemctl disable firewalld
 
+#Format and mount the data disk to /var/lib/neo4j
+MOUNT_POINT="/var/lib/neo4j"
+
+sudo parted /dev/sdc --script mklabel gpt mkpart xfspart xfs 0% 100%
+sudo mkfs.xfs /dev/sdc1
+sudo partprobe /dev/sdc1
+mkdir $MOUNT_POINT
+
+DATA_DISK_UUID=$(blkid | grep sdc | awk {'print $2'} | sed s/\"//g)
+echo "$DATA_DISK_UUID $MOUNT_POINT xfs defaults 0 0" >> /etc/fstab
+
+systemctl daemon-reload
+mount -a
+
 echo Adding neo4j yum repo...
 rpm --import https://debian.neo4j.com/neotechnology.gpg.key
 echo "
@@ -43,11 +57,13 @@ export NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
 yum -y install neo4j-enterprise-${graphDatabaseVersion}
 
 echo Installing APOC...
+
+echo Installing APOC...
 mv /var/lib/neo4j/labs/apoc-*-core.jar /var/lib/neo4j/plugins
 
 echo Configuring extensions and security in neo4j.conf...
 sed -i s~#dbms.unmanaged_extension_classes=org.neo4j.examples.server.unmanaged=/examples/unmanaged~dbms.unmanaged_extension_classes=com.neo4j.bloom.server=/bloom,semantics.extension=/rdf~g /etc/neo4j/neo4j.conf
-sed -i s/#dbms.security.procedures.unrestricted=my.extensions.example,my.procedures.*/dbms.security.procedures.unrestricted=gds.*,bloom.*,jwt.security.*/g /etc/neo4j/neo4j.conf
+sed -i s/#dbms.security.procedures.unrestricted=my.extensions.example,my.procedures.*/dbms.security.procedures.unrestricted=gds.*,bloom.*/g /etc/neo4j/neo4j.conf
 sed -i '$a dbms.security.http_auth_allowlist=/,/browser.*,/bloom.*' /etc/neo4j/neo4j.conf
 sed -i '$a dbms.security.procedures.allowlist=apoc.*,gds.*,bloom.*' /etc/neo4j/neo4j.conf
 
@@ -56,14 +72,6 @@ sed -i 's/#dbms.default_listen_address=0.0.0.0/dbms.default_listen_address=0.0.0
 ipString=$(hostname -I)
 echo "Ip Address ${ipString}"
 sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_address="${ipString}"/g /etc/neo4j/neo4j.conf
-
-echo "Adding entries to /etc/hosts to route cluster traffic internally..."
-echo "
-# Route cluster traffic internally
-10.176.40.68 vm0.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.40.69 vm1.node-${uniqueString}.${location}.cloudapp.azure.com
-10.176.40.70 vm2.node-${uniqueString}.${location}.cloudapp.azure.com
-" >> /etc/hosts
 
 if [[ $nodeCount == 1 ]]; then
   echo Running on a single node.
@@ -75,9 +83,11 @@ fi
 
 echo Turning on SSL...
 sed -i 's/dbms.connector.https.enabled=false/dbms.connector.https.enabled=true/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.connector.bolt.tls_level=DISABLED/dbms.connector.bolt.tls_level=OPTIONAL/g' /etc/neo4j/neo4j.conf
 
-#### Todo - Any reason we're not running this line?
-#sed -i 's/#dbms.connector.bolt.tls_level=DISABLED/dbms.connector.bolt.tls_level=OPTIONAL/g' /etc/neo4j/neo4j.conf
+echo Turn extra setting on
+sed -i 's/#dbms.allow_upgrade=true/dbms.allow_upgrade=true/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.routing.enabled=false/dbms.routing.enabled=true/g' /etc/neo4j/neo4j.conf
 
 answers() {
 echo --
@@ -91,8 +101,8 @@ echo root@localhost.localdomain
 answers | /usr/bin/openssl req -newkey rsa:2048 -keyout private.key -nodes -x509 -days 365 -out public.crt
 
 ### Todo - turn on cluster and backup
-#for service in bolt https cluster backup; do
-for service in https; do
+for service in bolt https cluster backup; do
+#for service in https; do
   sed -i s/#dbms.ssl.policy.${service}/dbms.ssl.policy.${service}/g /etc/neo4j/neo4j.conf
   mkdir -p /var/lib/neo4j/certificates/${service}/trusted
   mkdir -p /var/lib/neo4j/certificates/${service}/revoked
