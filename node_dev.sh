@@ -5,13 +5,13 @@ echo "Running node.sh"
 adminUsername=$1
 adminPassword=$2
 uniqueString=$3
-location=$4
-graphDatabaseVersion=$5
-installGraphDataScience=$6
-graphDataScienceLicenseKey=$7
-installBloom=$8
-bloomLicenseKey=$9
-nodeCount=${10}
+location='australiaeast'
+graphDatabaseVersion=$4
+installGraphDataScience=$5
+graphDataScienceLicenseKey=$6
+installBloom=$7
+bloomLicenseKey=$8
+nodeCount=$9
 
 echo "Using the settings:"
 echo adminUsername \'$adminUsername\'
@@ -29,23 +29,6 @@ echo "Turning off firewalld"
 systemctl stop firewalld
 systemctl disable firewalld
 
-#Format and mount the data disk to /var/lib/neo4j
-MOUNT_POINT="/var/lib/neo4j"
-
-DATA_DISK_DEVICE=$(parted -l 2>&1 | grep Error | awk {'print $2'} | sed 's/\://')
-
-sudo parted $DATA_DISK_DEVICE --script mklabel gpt mkpart xfspart xfs 0% 100%
-sudo mkfs.xfs $DATA_DISK_DEVICE\1
-sudo partprobe $DATA_DISK_DEVICE\1
-mkdir $MOUNT_POINT
-
-DATA_DISK_UUID=$(blkid | grep $DATA_DISK_DEVICE\1 | awk {'print $2'} | sed s/\"//g)
-
-echo "$DATA_DISK_UUID $MOUNT_POINT xfs defaults 0 0" >> /etc/fstab
-
-systemctl daemon-reload
-mount -a
-
 echo Adding neo4j yum repo...
 rpm --import https://debian.neo4j.com/neotechnology.gpg.key
 echo "
@@ -58,6 +41,8 @@ gpgcheck=1" > /etc/yum.repos.d/neo4j.repo
 echo Installing Graph Database...
 export NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
 yum -y install neo4j-enterprise-${graphDatabaseVersion}
+
+echo Installing APOC...
 
 echo Installing APOC...
 mv /var/lib/neo4j/labs/apoc-*-core.jar /var/lib/neo4j/plugins
@@ -74,7 +59,6 @@ ipString=$(hostname -I)
 echo "Ip Address ${ipString}"
 sed -i s/#dbms.default_advertised_address=localhost/dbms.default_advertised_address="${ipString}"/g /etc/neo4j/neo4j.conf
 
-
 if [[ $nodeCount == 1 ]]; then
   echo Running on a single node.
 else
@@ -87,7 +71,6 @@ echo Turning on SSL...
 sed -i 's/dbms.connector.https.enabled=false/dbms.connector.https.enabled=true/g' /etc/neo4j/neo4j.conf
 #sed -i 's/#dbms.connector.bolt.tls_level=DISABLED/dbms.connector.bolt.tls_level=OPTIONAL/g' /etc/neo4j/neo4j.conf
 
-
 echo Turn extra setting on
 sed -i 's/#dbms.allow_upgrade=true/dbms.allow_upgrade=true/g' /etc/neo4j/neo4j.conf
 #sed -i 's/#dbms.routing.enabled=false/dbms.routing.enabled=true/g' /etc/neo4j/neo4j.conf
@@ -96,6 +79,7 @@ sed -i 's/#dbms.memory.heap.max_size=512m/dbms.memory.heap.max_size=24100m/g' /e
 sed -i 's/#dbms.memory.pagecache.size=10g/dbms.memory.pagecache.size=28000m/g' /etc/neo4j/neo4j.conf
 sed -i 's/#causal_clustering.raft_listen_address=:7000/causal_clustering.raft_listen_address=:7000/g' /etc/neo4j/neo4j.conf
 sed -i 's/#causal_clustering.raft_advertised_address=:7000/causal_clustering.raft_advertised_address=:7000/g' /etc/neo4j/neo4j.conf
+
 
 answers() {
 echo --
