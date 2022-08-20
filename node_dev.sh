@@ -91,9 +91,9 @@ sed -i 's/dbms.connector.https.enabled=false/dbms.connector.https.enabled=true/g
 echo Turn extra setting on
 sed -i 's/#dbms.allow_upgrade=true/dbms.allow_upgrade=true/g' /etc/neo4j/neo4j.conf
 #sed -i 's/#dbms.routing.enabled=false/dbms.routing.enabled=true/g' /etc/neo4j/neo4j.conf
-sed -i 's/#dbms.memory.heap.initial_size=512m/dbms.memory.heap.initial_size=12000m/g' /etc/neo4j/neo4j.conf
-sed -i 's/#dbms.memory.heap.max_size=512m/dbms.memory.heap.max_size=12000m/g' /etc/neo4j/neo4j.conf
-sed -i 's/#dbms.memory.pagecache.size=10g/dbms.memory.pagecache.size=10g/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.memory.heap.initial_size=512m/dbms.memory.heap.initial_size=10g/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.memory.heap.max_size=512m/dbms.memory.heap.max_size=10g/g' /etc/neo4j/neo4j.conf
+sed -i 's/#dbms.memory.pagecache.size=10g/dbms.memory.pagecache.size=8g/g' /etc/neo4j/neo4j.conf
 sed -i 's/#causal_clustering.raft_listen_address=:7000/causal_clustering.raft_listen_address=:7000/g' /etc/neo4j/neo4j.conf
 sed -i 's/#causal_clustering.raft_advertised_address=:7000/causal_clustering.raft_advertised_address=:7000/g' /etc/neo4j/neo4j.conf
 
